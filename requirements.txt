@@ -1,0 +1,9 @@
+torch
+numpy
+pandas
+scikit-learn
+wfdb
+python-dotenv
+pydantic
+pytest
+matplotlib
