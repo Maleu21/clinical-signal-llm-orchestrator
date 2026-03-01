@@ -205,3 +205,34 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# =========================
+# ML / Deep Learning
+# =========================
+
+# Model checkpoints
+models/
+checkpoints/
+*.pt
+*.pth
+*.ckpt
+
+# Experiment tracking
+runs/
+logs/
+mlruns/
+
+# Data
+data/
+datasets/
+*.csv
+*.npy
+*.npz
+
+# Figures
+figures/
+*.png
+*.jpg
+
+# Local configs
+config_local.yaml
