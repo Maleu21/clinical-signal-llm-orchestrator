@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from signal import signal
 import numpy as np
 import wfdb
 from pathlib import Path
@@ -28,8 +29,11 @@ FS = 360  # MIT-BIH sampling rate
 # =========================
 
 def download_record(record: str):
-    print(f"[prepare] Downloading record {record}")
-    wfdb.dl_database("mitdb", dl_dir=str(RAW_DIR), records=[record])
+    record_path = RAW_DIR / record
+
+    if not record_path.exists():
+        print(f"[prepare] Downloading record {record}")
+        wfdb.dl_database("mitdb", dl_dir=str(RAW_DIR))
 
 
 # =========================
@@ -75,9 +79,11 @@ def main():
 
         record_path = RAW_DIR / record
         signal, fields = wfdb.rdsamp(str(record_path))
+        assert signal is not None
+
         ann = wfdb.rdann(str(record_path), "atr")
 
-        X, y = create_windows(signal[:, 0], ann, window_size)
+        X, y = create_windows(signal[:, 0], ann, window_size) 
 
         all_X.append(X)
         all_y.append(y)
