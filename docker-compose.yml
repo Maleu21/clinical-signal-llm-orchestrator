@@ -19,6 +19,7 @@ services:
       - db
     environment:
       DATABASE_URL: postgresql://app:app@db:5432/signals
+      OLLAMA_HOST: http://host.docker.internal:11434
 
 volumes:
   pgdata:

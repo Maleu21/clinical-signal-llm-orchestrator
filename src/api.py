@@ -5,6 +5,7 @@ import numpy as np
 
 from src.model import ECGConvNet
 from src.db import init_db, save_prediction
+from src.validation import validate_signal
 
 # =========================
 # App initialization
@@ -46,17 +47,10 @@ model.eval()
 @app.post("/predict")
 def predict(request: PredictRequest):
 
-    window = request.window
-
-    # Vérification taille
-    if len(window) != 720:
-        raise HTTPException(
-            status_code=400,
-            detail="Window must be 720 samples (2 seconds at 360Hz)"
-        )
+    # Validation du signal
+    x = validate_signal(request.window)
 
     # Conversion en tensor
-    x = np.array(window, dtype=np.float32)
     x = torch.from_numpy(x).unsqueeze(0).unsqueeze(0)
 
     # Inference
@@ -69,7 +63,7 @@ def predict(request: PredictRequest):
     # Sauvegarde en base
     save_prediction(prob, label)
 
-# Retour de la réponse
+    # Retour de la réponse
     return {
         "risk_score": float(prob),
         "label": label
