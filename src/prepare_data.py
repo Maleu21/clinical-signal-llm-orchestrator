@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import os
-from signal import signal
 import numpy as np
 import wfdb
 from pathlib import Path
@@ -21,7 +19,7 @@ RAW_DIR = DATA_DIR / "raw"
 PROCESSED_DIR = DATA_DIR / "processed"
 
 WINDOW_SECONDS = 2.0
-FS = 360  # MIT-BIH sampling rate
+FS = 360
 
 
 # =========================
@@ -29,11 +27,12 @@ FS = 360  # MIT-BIH sampling rate
 # =========================
 
 def download_record(record: str):
-    record_path = RAW_DIR / record
-
+    record_path = RAW_DIR / f"{record}.hea"  # vérifie le bon fichier
     if not record_path.exists():
         print(f"[prepare] Downloading record {record}")
-        wfdb.dl_database("mitdb", dl_dir=str(RAW_DIR))
+        wfdb.dl_database("mitdb", dl_dir=str(RAW_DIR), records=[record])  # télécharge uniquement ce record
+    else:
+        print(f"[prepare] Record {record} already exists, skipping")
 
 
 # =========================
@@ -45,9 +44,8 @@ def create_windows(signal, annotations, window_size):
 
     for i in range(0, len(signal) - window_size, window_size):
         window = signal[i:i + window_size]
-        label = 0  # default normal
+        label = 0
 
-        # if any abnormal beat inside window → label 1
         for idx, ann_symbol in zip(annotations.sample, annotations.symbol):
             if i <= idx < i + window_size:
                 if ann_symbol != "N":
@@ -82,19 +80,19 @@ def main():
         assert signal is not None
 
         ann = wfdb.rdann(str(record_path), "atr")
-
-        X, y = create_windows(signal[:, 0], ann, window_size) 
+        X, y = create_windows(signal[:, 0], ann, window_size)
 
         all_X.append(X)
         all_y.append(y)
         all_record_id.extend([record] * len(y))
+
+        print(f"[prepare] Record {record} done — {len(y)} windows")
 
     X = np.vstack(all_X)
     y = np.concatenate(all_y)
     record_id = np.array(all_record_id)
 
     output_path = PROCESSED_DIR / "mitbih_windows.npz"
-
     np.savez_compressed(
         output_path,
         X=X,

@@ -9,6 +9,7 @@ wfdb
 pydantic
 python-dotenv
 requests
+psycopg2-binary
 
 matplotlib
 pytest

@@ -2,14 +2,13 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
-
-# installer torch séparément (cache docker)
+# Installer torch en premier (cache stable, jamais invalidé)
 RUN pip install --no-cache-dir --timeout 1000 \
     --extra-index-url https://download.pytorch.org/whl/cpu \
     torch==2.2.2
 
-# installer le reste
+# Copier et installer le reste
+COPY requirements.txt .
 RUN pip install --no-cache-dir --timeout 1000 -r requirements.txt
 
 COPY . .
