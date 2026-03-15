@@ -1,26 +1,52 @@
 from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 import torch
 import numpy as np
+
 from src.model import ECGConvNet
 from src.db import init_db, save_prediction
 
-app = FastAPI()
+# =========================
+# App initialization
+# =========================
+
+app = FastAPI(title="ECG Risk API")
 
 device = torch.device("cpu")
 
 # Initialiser la base au démarrage
 init_db()
 
-# Charger le modèle
+# =========================
+# Request schema
+# =========================
+
+class PredictRequest(BaseModel):
+    window: list[float]
+
+# =========================
+# Load model
+# =========================
+
 model = ECGConvNet()
-checkpoint = torch.load("models/ecg_cnn.pt", map_location=device)
-model.load_state_dict(checkpoint["model_state"])
+
+try:
+    checkpoint = torch.load("models/ecg_cnn.pt", map_location=device)
+    model.load_state_dict(checkpoint["model_state"])
+except Exception as e:
+    print("⚠️ Model loading failed:", e)
+
 model.to(device)
 model.eval()
 
+# =========================
+# Predict endpoint
+# =========================
 
 @app.post("/predict")
-def predict(window: list[float]):
+def predict(request: PredictRequest):
+
+    window = request.window
 
     # Vérification taille
     if len(window) != 720:
@@ -43,8 +69,8 @@ def predict(window: list[float]):
     # Sauvegarde en base
     save_prediction(prob, label)
 
-    # Réponse API
+# Retour de la réponse
     return {
-        "risk_score": prob,
+        "risk_score": float(prob),
         "label": label
     }
