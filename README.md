@@ -1,18 +1,28 @@
 # Clinical Signal LLM Orchestrator
 
-Pipeline de triage médical combinant un CNN d'analyse ECG et un LLM local pour générer des réponses d'agent téléphonique clinique.
+Système de télésurveillance médicale simulant la fusion d'un signal ECG connecté et d'une utterance patient pour aider un agent téléphonique à prendre de meilleures décisions cliniques.
+
+En production, le signal ECG proviendrait d'un appareil connecté (montre, patch ECG) et l'utterance d'une transcription audio en temps réel. Dans cette démo, les deux entrées sont simulées pour illustrer l'architecture complète.
 
 ## Architecture
 ```
-Signal ECG (720 samples)
-        ↓
-Validation (NaN, signal plat, amplitude, taille)
-        ↓
-ECGConvNet (CNN 1D) → risk_score (0..1)
-        ↓
-CallOrchestrator → ESCALATE / CLARIFY / REASSURE
-        ↓
-Mistral 7B (Ollama) → Réponse en français
+Appareil ECG connecté          Patient (téléphone)
+        ↓                               ↓
+Signal ECG (720 samples)       Utterance (texte simulé)
+        ↓                               ↓
+Validation (NaN, plat,                  |
+amplitude, taille)                      |
+        ↓                               |
+ECGConvNet (CNN 1D)                     |
+→ risk_score (0..1)                     |
+        ↓                               ↓
+        └──────── CallOrchestrator ─────┘
+                        ↓
+              ESCALATE / CLARIFY / REASSURE
+                        ↓
+              Mistral 7B (Ollama)
+                        ↓
+              Réponse en français pour l'agent
 ```
 
 ## Stack technique
@@ -38,11 +48,10 @@ chmod +x start.sh
 ```
 
 Le script fait tout automatiquement :
-1. Installe Ollama si absent
+1. Lance l'API FastAPI + PostgreSQL + Ollama via Docker Compose
 2. Télécharge Mistral 7B (4.1 Go, **une seule fois**)
-3. Lance l'API FastAPI + PostgreSQL via Docker Compose
-4. Télécharge et prépare les données MIT-BIH (**une seule fois**)
-5. Entraîne le CNN sur les données ECG (**une seule fois**, ~5 min)
+3. Télécharge et prépare les données MIT-BIH (**une seule fois**)
+4. Entraîne le CNN sur les données ECG (**une seule fois**, ~5 min)
 
 L'API est disponible sur `http://localhost:8000`
 La documentation interactive sur `http://localhost:8000/docs`
@@ -98,3 +107,9 @@ tests/
 **Pourquoi un fallback rule-based ?** Si Ollama est indisponible, l'orchestrateur bascule automatiquement sur des règles déterministes — le système reste opérationnel.
 
 **Guardrails médicaux** — toute réponse LLM est filtrée par `check_safety()` pour éviter tout diagnostic ou conseil de traitement.
+
+**Limites et évolutions possibles**
+- L'utterance patient est simulée — en production elle viendrait d'une transcription audio temps réel (Whisper)
+- Le signal ECG est simulé — en production il viendrait d'un appareil connecté via API
+- Airflow pourrait orchestrer le réentraînement automatique du CNN
+- Prometheus + Grafana pour monitorer les drifts de distribution en production
