@@ -1,66 +1,58 @@
 import requests
 import numpy as np
+import sys
+sys.path.insert(0, '/app')
 
-API_URL = "http://127.0.0.1:8000/predict"
+from src.data import load_npz
+from src.infer import load_model, infer_signal
+
+API_URL = "http://localhost:8000/predict"
 
 
 # ==========================================================
-# 1️⃣ TEST 1 — Signal zéro
+# 1 — Signal zéro (rejeté par validation)
 # ==========================================================
 def test_zero_signal():
-    print("\n===== TEST 1 — Signal ZÉRO =====")
+    print("\n===== TEST 1 — Signal ZERO =====")
     signal = np.zeros(720).tolist()
-
     send_request(signal)
 
 
 # ==========================================================
-# 2️⃣ TEST 2 — Signal avec petit bruit
+# 2 — Vrai signal ECG normal
 # ==========================================================
-def test_small_noise():
-    print("\n===== TEST 2 — Petit BRUIT =====")
-
-    # signal de base très faible
-    base = np.zeros(720)
-
-    # ajout bruit léger
-    noise = np.random.normal(0, 0.05, 720)
-
-    signal = (base + noise).tolist()
-
+def test_normal_signal():
+    print("\n===== TEST 2 — Signal ECG NORMAL =====")
+    d = load_npz("data/processed/mitbih_windows.npz")
+    normal_idx = next(i for i, y in enumerate(d.y) if y == 0)
+    signal = d.X[normal_idx].tolist()
     send_request(signal)
 
 
 # ==========================================================
-# 3️⃣ TEST 3 — Signal avec spike fort
+# 3 — Vrai signal ECG anormal bien détecté
 # ==========================================================
-def test_spike():
-    print("\n===== TEST 3 — SPIKE FORT =====")
-
-    t = np.linspace(0, 2, 720)
-
-    # signal sinusoïdal
-    signal = 0.5 * np.sin(2 * np.pi * 5 * t)
-
-    # ajouter un spike fort au milieu
-    spike_position = 360
-    signal[spike_position:spike_position+5] += 2.0
-
-    signal = signal.tolist()
-
-    send_request(signal)
+def test_abnormal_signal():
+    print("\n===== TEST 3 — Signal ECG ANORMAL =====")
+    d = load_npz("data/processed/mitbih_windows.npz")
+    model = load_model("models/ecg_cnn.pt")
+    for i, y in enumerate(d.y):
+        if y == 1:
+            sr = infer_signal(d.X[i], model=model)
+            if sr.risk_score > 0.7:
+                print(f"Sample idx={i}")
+                send_request(d.X[i].tolist())
+                break
 
 
 # ==========================================================
 # Fonction d'appel API
 # ==========================================================
 def send_request(signal):
-
     response = requests.post(
         API_URL,
         json={"window": signal}
     )
-
     if response.status_code == 200:
         result = response.json()
         print("Risk score:", round(result["risk_score"], 4))
@@ -73,7 +65,6 @@ def send_request(signal):
 # MAIN
 # ==========================================================
 if __name__ == "__main__":
-
     test_zero_signal()
-    test_small_noise()
-    test_spike()
+    test_normal_signal()
+    test_abnormal_signal()

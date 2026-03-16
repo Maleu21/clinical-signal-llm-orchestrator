@@ -104,12 +104,12 @@ tests/
 
 **Pourquoi Ollama ?** LLM local, pas de dépendance à une API externe, fonctionne hors ligne, gratuit.
 
-**Pourquoi un fallback rule-based ?** Si Ollama est indisponible, l'orchestrateur bascule automatiquement sur des règles déterministes — le système reste opérationnel.
+**Pourquoi un fallback rule-based ?** Si Ollama est indisponible, l'orchestrateur bascule automatiquement sur des règles déterministes - le système reste opérationnel.
 
-**Guardrails médicaux** — toute réponse LLM est filtrée par `check_safety()` pour éviter tout diagnostic ou conseil de traitement.
+**Guardrails médicaux** Toute réponse LLM est filtrée par `check_safety()` pour éviter tout diagnostic ou conseil de traitement.
 
 **Limites et évolutions possibles**
-- L'utterance patient est simulée — en production elle viendrait d'une transcription audio temps réel (Whisper)
-- Le signal ECG est simulé — en production il viendrait d'un appareil connecté via API
+- L'utterance patient est simulée - en production elle viendrait d'une transcription audio temps réel (Whisper)
+- Le signal ECG est simulé - en production il viendrait d'un appareil connecté via API
 - Airflow pourrait orchestrer le réentraînement automatique du CNN
 - Prometheus + Grafana pour monitorer les drifts de distribution en production
