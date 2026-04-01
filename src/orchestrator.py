@@ -20,8 +20,7 @@ def summarize_signal(sr: SignalResult) -> str:
     return f"risk_score={sr.risk_score:.2f}, label={sr.label}, note={sr.note}"
 
 
-def _call_ollama(prompt: str, system: str) -> str:
-    """Appel au LLM local via Ollama."""
+def _call_ollama(prompt: str, system: str, timeout: int = 120) -> str:
     try:
         response = requests.post(
             f"{OLLAMA_HOST}/api/chat",
@@ -33,7 +32,7 @@ def _call_ollama(prompt: str, system: str) -> str:
                     {"role": "user",   "content": prompt},
                 ]
             },
-            timeout=30,
+            timeout=timeout,
         )
         response.raise_for_status()
         return response.json()["message"]["content"].strip()

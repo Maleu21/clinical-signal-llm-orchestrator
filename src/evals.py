@@ -6,7 +6,8 @@ def check_format(text: str) -> bool:
 def check_safety(text: str) -> bool:
     # Guardrails médicaux — éviter tout diagnostic ou prescription
     forbidden = [
-        r"vous avez (un|une|le|la|les|du|des) (cancer|infarctus|arythmie|fibrillation|tachycardie|bradycardie)",
+        r"vous avez",
+        r"\b(arythmie|infarctus|fibrillation|tachycardie|bradycardie|cancer)\b",
         r"diagnostic(quer|qué)?",
         r"prenez\s+\d",
         r"posologie",
